@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -5,102 +6,59 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy import stats
 
-st.set_page_config(layout="wide")
+# Set up the page
+st.set_page_config(page_title="Car Price Analysis", layout="wide")
+st.title("Car Price Analysis")
+st.markdown("""
+<h3>What are the main characteristics that have the most impact on the car price?</h3>
+""", unsafe_allow_html=True)
 
-# Title and description
-st.title("Car Price Predictor - Data Analysis")
-st.markdown("This app explores the relationship between car characteristics and their impact on price.")
+# Load data from GitHub
+@st.cache_data
+def load_data():
+    url = 'https://raw.githubusercontent.com/klamsal/Fall2024Exam/main/CleanedAutomobile.csv'
+    df = pd.read_csv(url)
+    return df
 
-# 1. Load data
-st.header("1. Load and Inspect the Dataset")
-url = 'https://raw.githubusercontent.com/klamsal/Fall2024Exam/main/CleanedAutomobile.csv'
-df = pd.read_csv(url)
+df = load_data()
+
+# Section 1: Show Data
+st.header("1. Dataset Overview")
+st.write("First few rows of the dataset:")
 st.dataframe(df.head())
 
-# 2. Analyzing Individual Feature Patterns Using Visualization
-st.header("2. Feature Correlations and Visualizations")
-st.markdown("### What is the data type of 'peak-rpm'?")
-st.write(df.dtypes['peak-rpm'])
+# Section 2: Data Types
+st.header("2. Data Types")
+st.write("Data types of each column:")
+st.write(df.dtypes.astype(str))
 
-st.markdown("### Correlation Matrix")
-selected_columns = df[['bore', 'stroke', 'compression-ratio', 'horsepower']]
-correlation_matrix = selected_columns.corr()
-st.dataframe(correlation_matrix)
+# Section 3: Correlation Analysis
+st.header("3. Correlation Analysis")
 
-# Scatterplots
-st.subheader("Regression Plots")
-fig1 = sns.regplot(x="engine-size", y="price", data=df)
-st.pyplot(fig1.figure)
+# Question 1: Data type of 'peak-rpm'
+st.subheader("Question 1: Data Type of 'peak-rpm'")
+st.write(f"Data type of 'peak-rpm': **{df['peak-rpm'].dtype}**")
 
-fig2 = sns.regplot(x="highway-mpg", y="price", data=df)
-st.pyplot(fig2.figure)
+# Question 2: Correlation between selected features
+st.subheader("Question 2: Correlation Matrix")
+selected_cols = ['bore', 'stroke', 'compression-ratio', 'horsepower']
+st.write("Correlation matrix for bore, stroke, compression-ratio, horsepower:")
+corr_matrix = df[selected_cols].corr()
+st.dataframe(corr_matrix)
 
-fig3 = sns.regplot(x="peak-rpm", y="price", data=df)
-st.pyplot(fig3.figure)
+# Section 4: Visualizations
+st.header("4. Feature Visualization")
 
-# Stroke vs price correlation
-st.subheader("Correlation: Stroke vs. Price")
-st.write(df[['stroke', 'price']].corr())
+# Engine Size vs Price
+st.subheader("Engine Size vs Price")
+fig, ax = plt.subplots()
+sns.regplot(x="engine-size", y="price", data=df, ax=ax)
+ax.set_ylim(0,)
+st.pyplot(fig)
+plt.clf()
 
-fig4 = sns.regplot(x="stroke", y="price", data=df)
-st.pyplot(fig4.figure)
-
-# Categorical Variables
-st.header("Boxplots of Categorical Variables vs Price")
-fig5 = sns.boxplot(x="body-style", y="price", data=df)
-st.pyplot(fig5.figure)
-
-fig6 = sns.boxplot(x="engine-location", y="price", data=df)
-st.pyplot(fig6.figure)
-
-fig7 = sns.boxplot(x="drive-wheels", y="price", data=df)
-st.pyplot(fig7.figure)
-
-# 3. Descriptive Statistics
-st.header("3. Descriptive Statistical Analysis")
-st.write(df.describe())
-st.write(df.describe(include='object'))
-
-# Value Counts
-st.subheader("Drive Wheels Count")
-drive_wheels_counts = df['drive-wheels'].value_counts().to_frame()
-drive_wheels_counts.rename(columns={'drive-wheels': 'value_counts'}, inplace=True)
-drive_wheels_counts.index.name = 'drive-wheels'
-st.write(drive_wheels_counts)
-
-st.subheader("Engine Location Count")
-engine_loc_counts = df['engine-location'].value_counts().to_frame()
-engine_loc_counts.rename(columns={'engine-location': 'value_counts'}, inplace=True)
-engine_loc_counts.index.name = 'engine-location'
-st.write(engine_loc_counts)
-
-# 4. Basics of Grouping
-st.header("4. Grouping and Pivot Tables")
-
-# Select relevant columns
-df_group_one = df[['drive-wheels', 'body-style', 'price']]
-
-# Only average numeric columns (price), keep 'drive-wheels' for grouping
-df_group_one = df_group_one.groupby(['drive-wheels'], as_index=False)[['price']].mean()
-
-# Display result
-st.write(df_group_one)
+# Highway MPG vs Price
+st.subheader("Highway MPG vs Price")
+fig, ax
 
 
-grouped_test1 = df[['drive-wheels','body-style','price']].groupby(['drive-wheels','body-style'],as_index=False).mean()
-grouped_pivot = grouped_test1.pivot(index='drive-wheels', columns='body-style', values='price').fillna(0)
-st.dataframe(grouped_pivot)
-
-st.markdown("### Heatmap of Drive-Wheels and Body-Style vs Price")
-fig8, ax = plt.subplots()
-sns.heatmap(grouped_pivot, annot=True, fmt=".0f", cmap="RdBu", ax=ax)
-st.pyplot(fig8)
-
-# 5. Correlation and Causation
-st.header("5. Pearson Correlation Coefficients with Price")
-st.write(df.corr(numeric_only=True)['price'].sort_values(ascending=False))
-
-st.markdown("### Pearson Correlation Test (wheel-base vs price)")
-pearson_coef, p_value = stats.pearsonr(df['wheel-base'], df['price'])
-st.write(f"**Pearson Coefficient**: {pearson_coef:.3f}")
-st.write(f"**P-value**: {p_value:.3e}")

@@ -76,9 +76,16 @@ st.write(engine_loc_counts)
 
 # 4. Basics of Grouping
 st.header("4. Grouping and Pivot Tables")
-df_group_one = df[['drive-wheels','body-style','price']]
-df_group_one = df_group_one.groupby(['drive-wheels'],as_index=False).mean()
+
+# Select relevant columns
+df_group_one = df[['drive-wheels', 'body-style', 'price']]
+
+# Only average numeric columns (price), keep 'drive-wheels' for grouping
+df_group_one = df_group_one.groupby(['drive-wheels'], as_index=False)[['price']].mean()
+
+# Display result
 st.write(df_group_one)
+
 
 grouped_test1 = df[['drive-wheels','body-style','price']].groupby(['drive-wheels','body-style'],as_index=False).mean()
 grouped_pivot = grouped_test1.pivot(index='drive-wheels', columns='body-style', values='price').fillna(0)
